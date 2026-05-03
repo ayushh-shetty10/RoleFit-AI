@@ -1,11 +1,5 @@
 import axios from "axios";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL;
-
-if (!apiBaseUrl) {
-    throw new Error("VITE_API_URL is not defined");
-}
-
 // export const register = (username,email,password)=>{
 
 //     try{
@@ -67,7 +61,7 @@ if (!apiBaseUrl) {
 // }
 
 const api = axios.create({
-    baseURL:`${apiBaseUrl.replace(/\/$/, "")}/api/auth`,
+    baseURL:"http://localhost:3000/api/auth",
     withCredentials:true,
 })
 

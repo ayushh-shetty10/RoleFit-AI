@@ -1,19 +1,13 @@
 import axios from "axios";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL;
-
-if (!apiBaseUrl) {
-    throw new Error("VITE_API_URL is not defined");
-}
-
 const api = axios.create({
-    baseURL:apiBaseUrl.replace(/\/$/, ""),
+    baseURL:"http://localhost:3000",
     withCredentials:true
 });
 
 export const generateInterviewReport = async({jobDescription,selfDescription,resumeFile}) => {
     const formData = new FormData();
-    formData.append("jobDescription",jobDescription);
+    formData.append("jonDescription",jobDescription);
     formData.append("selfDescription",selfDescription);
     formData.append("resume",resumeFile);
 

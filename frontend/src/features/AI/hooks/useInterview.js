@@ -1,5 +1,5 @@
 import {useContext, useEffect} from "react";
-import {interviewContext} from "../interview.context";
+import {interviewContext} from "../Interview.context.jsx";
 import { generateInterviewReport, getAllReports, getOneReport, getReportPDF } from "../services/interview.api";
 import { useParams } from "react-router";
 
