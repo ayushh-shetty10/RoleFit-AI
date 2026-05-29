@@ -8,7 +8,7 @@ const { resumeRouter } = require("./routes/resume.routes");
 
 const app=express();
 
-app.post("/",(req,res)=>{
+app.get("/",(req,res)=>{
     res.send("Backend is running! ");
 })
 app.use(express.json());
