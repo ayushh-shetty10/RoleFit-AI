@@ -13,10 +13,16 @@ app.get("/",(req,res)=>{
 })
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+].filter(Boolean);
+
 app.use(cors({
-    origin:"http://localhost:5173",
-    credentials:true,
-}))
+  origin: allowedOrigins,
+  credentials: true,
+}));
 app.use("/api/auth",authRouter);
 app.use("/api/report",resumeRouter);
 
