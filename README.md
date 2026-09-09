@@ -2,9 +2,7 @@
 
 An AI-powered career intelligence platform that analyzes resumes against job descriptions to generate match scores, identify skill gaps, and provide personalized interview questions and preparation plans.
 
-## LIVE
-backend:https://rolefit-ai-nzqp.onrender.com
-frontend:https://role-fit-ai-i66v.vercel.app/
+
 
 ## Key Features
 
@@ -17,7 +15,7 @@ frontend:https://role-fit-ai-i66v.vercel.app/
 
 ## Stack
 
-- Frontend: React, Vite, React Router, Axios, SCSS
+- Frontend: React, Vite, React Router, Axios, CSS
 - Backend: Node.js, Express, MongoDB, Mongoose
 - AI: Google Gemini API via `@google/genai`
 - Auth: JWT, cookies
