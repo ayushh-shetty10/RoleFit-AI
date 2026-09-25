@@ -39,22 +39,27 @@ const QuestionCard = ({ item, index }) => {
     )
 }
 
-const RoadMapDay = ({ day }) => (
-    <div className='roadmap-day'>
-        <div className='roadmap-day__header'>
-            <span className='roadmap-day__badge'>Day {day.day}</span>
-            <h3 className='roadmap-day__focus'>{day.focus}</h3>
+const RoadMapDay = ({ day }) => {
+    const rawDay = day.day != null ? String(day.day).trim() : '';
+    const dayLabel = /^day/i.test(rawDay) ? rawDay : `Day ${rawDay}`;
+
+    return (
+        <div className='roadmap-day'>
+            <div className='roadmap-day__header'>
+                <span className='roadmap-day__badge'>{dayLabel}</span>
+                <h3 className='roadmap-day__focus'>{day.focus}</h3>
+            </div>
+            <ul className='roadmap-day__tasks'>
+                {day.tasks.map((task, i) => (
+                    <li key={i}>
+                        <span className='roadmap-day__bullet' />
+                        {task}
+                    </li>
+                ))}
+            </ul>
         </div>
-        <ul className='roadmap-day__tasks'>
-            {day.tasks.map((task, i) => (
-                <li key={i}>
-                    <span className='roadmap-day__bullet' />
-                    {task}
-                </li>
-            ))}
-        </ul>
-    </div>
-)
+    );
+};
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const Interview = () => {
@@ -114,10 +119,10 @@ const Interview = () => {
                         <section>
                             <div className='content-header'>
                                 <h2>Technical Questions</h2>
-                                <span className='content-header__count'>{report.technicalQNAs.length} questions</span>
+                                <span className='content-header__count'>{report.technicalQNAs?.length || 0} questions</span>
                             </div>
                             <div className='q-list'>
-                                {report.technicalQNAs.map((q, i) => (
+                                {report.technicalQNAs?.map((q, i) => (
                                     <QuestionCard key={i} item={q} index={i} />
                                 ))}
                             </div>
@@ -128,10 +133,10 @@ const Interview = () => {
                         <section>
                             <div className='content-header'>
                                 <h2>Behavioral Questions</h2>
-                                <span className='content-header__count'>{report.behaviouralQNAs.length} questions</span>
+                                <span className='content-header__count'>{report.behaviouralQNAs?.length || 0} questions</span>
                             </div>
                             <div className='q-list'>
-                                {report.behaviouralQNAs.map((q, i) => (
+                                {report.behaviouralQNAs?.map((q, i) => (
                                     <QuestionCard key={i} item={q} index={i} />
                                 ))}
                             </div>
@@ -142,10 +147,10 @@ const Interview = () => {
                         <section>
                             <div className='content-header'>
                                 <h2>Preparation Road Map</h2>
-                                <span className='content-header__count'>{report.preparationPlan.length}-day plan</span>
+                                <span className='content-header__count'>{report.preparationPlan?.length || 0}-day plan</span>
                             </div>
                             <div className='roadmap-list'>
-                                {report.preparationPlan.map((day) => (
+                                {report.preparationPlan?.map((day) => (
                                     <RoadMapDay key={day.day} day={day} />
                                 ))}
                             </div>
@@ -165,7 +170,7 @@ const Interview = () => {
                             <span className='match-score__value'>{report.matchScore}</span>
                             <span className='match-score__pct'>%</span>
                         </div>
-                        <p className='match-score__sub'>Strong match for this role</p>
+                        <p className='match-score__sub'>Match Score for this role</p>
                     </div>
 
                     <div className='sidebar-divider' />
@@ -174,7 +179,7 @@ const Interview = () => {
                     <div className='skill-gaps'>
                         <p className='skill-gaps__label'>Skill Gaps</p>
                         <div className='skill-gaps__list'>
-                            {report.skillGap.map((gap, i) => (
+                            {report.skillGap?.map((gap, i) => (
                                 <span key={i} className={`skill-tag skill-tag--${gap.severity}`}>
                                     {gap.skill}
                                 </span>

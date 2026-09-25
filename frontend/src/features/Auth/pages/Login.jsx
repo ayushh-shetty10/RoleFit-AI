@@ -8,24 +8,33 @@ const Login = () => {
     //2-way binding.
     const [email,setEmail]=useState("");
     const [password,setPassword]=useState("");
-    const {loading,handleLogin}=useAuth();
+    const [errorMsg, setErrorMsg] = useState("");
+    const {loading, handleLogin} = useAuth();
 
-    const handleSubmit = async (e)=>{
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      handleLogin({email,password});
-      navigate("/");
+      setErrorMsg("");
+      try {
+        await handleLogin({ email, password });
+        navigate("/");
+      } catch (err) {
+        setErrorMsg(err.response?.data?.message || "Login failed. Please check credentials.");
+      }
     }
 
     if(loading){
-      return <main>
-        <h1>Loading.....</h1>
-      </main>
+      return (
+        <main className="loading-screen" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <h2>Logging in... Please wait.</h2>
+        </main>
+      );
     }
 
   return (
     <main>
       <div className="main-grp">
         <h1>LOGIN</h1>
+        {errorMsg && <p style={{ color: '#ef4444', marginBottom: '1rem', fontWeight: '500' }}>{errorMsg}</p>}
 
         <form className="form-container" onSubmit={handleSubmit}>
         <div className="input-grp">

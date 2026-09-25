@@ -20,9 +20,9 @@ const authMiddleware = async function(req,res,next){
         }
 
         try{
-                const decoded =  jwt.verify(token,process.env.JWT_SECRET_KEY);
-                
-                req.user=decoded;
+                const decoded = jwt.verify(token,process.env.JWT_SECRET_KEY);
+                const userId = decoded.id || decoded.Id;
+                req.user = { ...decoded, id: userId, Id: userId };
                 return next();
         }
         catch(err){

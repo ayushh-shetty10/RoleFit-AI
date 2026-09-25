@@ -1,4 +1,4 @@
-const { PDFParse } = require("pdf-parse");
+const pdfParseModule = require("pdf-parse");
 const { GenerateReport, GeneratePDF } = require("../services/ai.service");
 const { ResumeReportModel } = require("../models/ResumeReport.model");
 
@@ -26,7 +26,6 @@ const normalizeReport = (report) => ({
         : report.technicalQNAs,
     behaviouralQNAs: Array.isArray(report.behaviouralQNAs)
         ? report.behaviouralQNAs.map(parseIfString)
-
         : report.behaviouralQNAs,
     skillGap: Array.isArray(report.skillGap)
         ? report.skillGap.map(parseIfString)
@@ -37,40 +36,73 @@ const normalizeReport = (report) => ({
 });
 
 const resumeConroller = async (req,res)=>{
-    const resumeFile = req.file;
-    const {selfDescription,jobDescription} = req.body;
+    try {
+        const resumeFile = req.file;
+        const {selfDescription = "", jobDescription = ""} = req.body;
 
-    if(!resumeFile){
-        return res.status(400).json({
-            message:"Resume file is required.",
+        if(!jobDescription || !jobDescription.trim()){
+            return res.status(400).json({
+                message:"Job description is required.",
+            });
+        }
+
+        if(!resumeFile && (!selfDescription || !selfDescription.trim())){
+            return res.status(400).json({
+                message:"Either a Resume file or a Self Description is required.",
+            });
+        }
+
+        let resumeContent = "";
+        if (resumeFile && resumeFile.buffer) {
+            try {
+                if (typeof pdfParseModule === "function") {
+                    const parsedData = await pdfParseModule(resumeFile.buffer);
+                    resumeContent = (parsedData.text || "").trim();
+                } else if (pdfParseModule.PDFParse) {
+                    const pdfInstance = new pdfParseModule.PDFParse({ data: resumeFile.buffer });
+                    const pdfTextObj = await pdfInstance.getText();
+                    resumeContent = (typeof pdfTextObj === "string" ? pdfTextObj : (pdfTextObj.text || "")).trim();
+                }
+            } catch (pdfErr) {
+                console.error("PDF Parsing Error:", pdfErr);
+            }
+
+            if (!resumeContent && (!selfDescription || !selfDescription.trim())) {
+                return res.status(400).json({
+                    message: "Could not extract readable text from the uploaded PDF. Please upload a PDF with selectable text or enter a Self Description.",
+                });
+            }
+        }
+
+        const userId = req.user.id || req.user.Id;
+
+        const ReportByAi = await GenerateReport({
+            selfDescription,
+            jobDescription,
+            resume: resumeContent || selfDescription,
+        });
+
+        const cleanedReport = normalizeReport(ReportByAi);
+
+        const interviewReport = await ResumeReportModel.create({
+            user: userId,
+            userDescription: selfDescription,
+            jobDescription,
+            resumeContent: resumeContent || selfDescription,
+            title: cleanedReport.title || "Interview Strategy Plan",
+            ...cleanedReport,
+        });
+
+        return res.status(201).json({
+            message:"Resume report generated successfully!",
+            cleanedReport: interviewReport,
+        });
+    } catch(error) {
+        console.error("Generate Report Controller Error:", error);
+        return res.status(500).json({
+            message: "Failed to generate interview report. Please try again.",
         });
     }
-
-    const pdf = new PDFParse({
-        data: resumeFile.buffer,
-    });
-    const { text: resumeContent } = await pdf.getText();
-
-    const ReportByAi = await GenerateReport({
-        selfDescription,
-        jobDescription,
-        resume:resumeContent,
-    });
-
-    const cleanedReport = normalizeReport(ReportByAi);
-
-    const interviewReport = await ResumeReportModel.create({
-        user:req.user.Id,
-        userDescription:selfDescription,
-        jobDescription,
-        resumeContent,
-        ...cleanedReport,
-    });
-
-    res.status(201).json({
-        message:"Resume report generated successfully!",
-        cleanedReport,
-    })
 }
 
 /**
@@ -79,27 +111,34 @@ const resumeConroller = async (req,res)=>{
  * @access PRIVATE
  */
 const getReportById = async(req,res)=>{
-    const {interviewId} = req.params;
+    try {
+        const {interviewId} = req.params;
+        const userId = req.user.id || req.user.Id;
 
-    const report = await ResumeReportModel.findById(interviewId);
+        const report = await ResumeReportModel.findById(interviewId);
 
-    if(!report){
-        return res.status(404).json({
-            message:"Report not found.",
+        if(!report){
+            return res.status(404).json({
+                message:"Report not found.",
+            });
+        }
+
+        if(userId.toString() !== report.user.toString()){
+            return res.status(403).json({
+                message:"You are not authorized to access this report.",
+            });
+        }
+
+        return res.status(200).json({
+            message:"Report fetched successfully!",
+            report,
+        });
+    } catch(error) {
+        console.error("Get Report By ID Error:", error);
+        return res.status(500).json({
+            message: "Error fetching report details.",
         });
     }
-
-    if(req.user.Id.toString() !== report.user.toString()){
-        return res.status(403).json({
-            message:"You are not authorized to access this report.",
-        });
-    }
-    
-
-    res.status(200).json({
-        message:"Report fetched successfully!",
-        report,
-    });
 }
 
 /**
@@ -108,38 +147,61 @@ const getReportById = async(req,res)=>{
  * @access PRIVATE
  */
 const getAllReports = async(req,res)=>{
-    const reports = await ResumeReportModel.find({user:req.user.Id}).sort({createdAt:-1}).select("-technicalQNAs -behaviouralQNAs -__v -skillGap -preparationPlan -userDescription -jobDescription -resumeContent");
+    try {
+        const userId = req.user.id || req.user.Id;
+        const reports = await ResumeReportModel.find({user: userId})
+            .sort({createdAt:-1})
+            .select("-technicalQNAs -behaviouralQNAs -__v -skillGap -preparationPlan -userDescription -jobDescription -resumeContent");
 
-    if(!reports){
-        return res.status(404).json({
-            message:"there are no reports created by the user"
+        return res.status(200).json({
+            message:"Reports fetched successfully.",
+            reports: reports || [],
+        });
+    } catch(error) {
+        console.error("Get All Reports Error:", error);
+        return res.status(500).json({
+            message: "Error fetching user reports.",
         });
     }
-    res.status(200).json({
-        message:"Reports fetched successfully.",
-        reports,
-    });
-
-
 }
 
 /**
- * 
- * @param {*} req 
- * @param {*} res 
+ * @route POST/api/report/pdf/:reportId
+ * @description generate and download PDF report
+ * @access PRIVATE
  */
 const getReportPDF = async(req,res)=>{
-    const {reportId}=req.params;
-    const report = await ResumeReportModel.findById(reportId);
+    try {
+        const {reportId} = req.params;
+        const userId = req.user.id || req.user.Id;
 
-    const PDFBuffer = await GeneratePDF({report});
-    res.set({
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=report${reportId}.pdf`
-    })
+        const report = await ResumeReportModel.findById(reportId);
 
+        if(!report){
+            return res.status(404).json({
+                message:"Report not found.",
+            });
+        }
 
-    res.send(PDFBuffer);
+        if(userId.toString() !== report.user.toString()){
+            return res.status(403).json({
+                message:"You are not authorized to download this report.",
+            });
+        }
+
+        const PDFBuffer = await GeneratePDF({report});
+        res.set({
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `attachment; filename=report_${reportId}.pdf`
+        });
+
+        return res.send(PDFBuffer);
+    } catch(error) {
+        console.error("Get Report PDF Error:", error);
+        return res.status(500).json({
+            message: "Failed to generate PDF.",
+        });
+    }
 }
 
 module.exports={resumeConroller,getReportById,getAllReports,getReportPDF};

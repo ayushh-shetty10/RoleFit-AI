@@ -4,26 +4,10 @@ import { Getme, login, logout, register } from "../services/auth.api";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
   const { user, setUser, loading, setLoading } = context;
-
-  
-    useEffect(()=>{
-
-        const getAndSetUser =async()=>{
-            try{
-            setLoading(true);
-            const data = await Getme();
-            setUser(data.user);
-    
-            }catch(err){
-                console.log(err);
-            }finally{
-                setLoading(false);
-            }
-        }
-
-        getAndSetUser();
-    },[])
 
   const handleLogin = async ({ email, password }) => {
     setLoading(true);
@@ -33,8 +17,10 @@ export const useAuth = () => {
         password,
       });
       setUser(data.user);
+      return data.user;
     } catch (err) {
-      console.log(err);
+      console.error("Login failed:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -49,8 +35,10 @@ export const useAuth = () => {
         username,
       });
       setUser(data.user);
+      return data.user;
     } catch (err) {
-          console.log(err);
+      console.error("Register failed:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -59,10 +47,10 @@ export const useAuth = () => {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      const data = await logout();
+      await logout();
       setUser(null);
     } catch (err) {
-          console.log(err);
+      console.error("Logout failed:", err);
     } finally {
       setLoading(false);
     }

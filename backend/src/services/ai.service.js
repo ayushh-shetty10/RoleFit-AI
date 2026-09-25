@@ -39,13 +39,49 @@ const responseSchema = z.object({
         severity:z.enum(["low","medium","high"]).describe("A severity level that indicates how critical the skill is for the job"),
     })),
     preparationPlan:z.array(z.object({
-        day:z.number().describe("The day number in the preparation plan"),
+        day:z.union([z.number(), z.string()]).describe("The day number or day range/label in the preparation plan, e.g. 1 or 'Day 1-2'"),
         focus:z.string().describe("The focus area for that day based on the identified skill gaps and relevant questions"),
         tasks:z.array(z.string()).describe("A list of tasks to be completed on that day to prepare for the job interview"),
     })),
-    title:z.string().describe("A title for the JOB about which the user is a trying to apply for.")
+    title:z.string().describe("A title for the Job position the user is applying for, e.g. 'Senior React Developer'")
 });
 
+
+const safeJsonParse = (rawText) => {
+    if (!rawText) return {};
+    let text = rawText.trim();
+    if (text.startsWith("```")) {
+        text = text.replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trim();
+    }
+    return JSON.parse(text);
+};
+
+const GEMINI_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-pro"
+];
+
+const generateWithFallback = async ({ prompt, schema }) => {
+    let lastError = null;
+    for (const model of GEMINI_MODELS) {
+        try {
+            const response = await ai.models.generateContent({
+                model,
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: zodToJsonSchema(schema),
+                }
+            });
+            return response;
+        } catch (err) {
+            console.warn(`Gemini Model [${model}] unavailable (${err.status || err.code || err.message}). Switching to next fallback...`);
+            lastError = err;
+        }
+    }
+    throw lastError;
+};
 
 async function GenerateReport ({selfDescription,resume,jobDescription}){
 
@@ -61,23 +97,9 @@ async function GenerateReport ({selfDescription,resume,jobDescription}){
     Resume: ${resume}
     also maintain the report format as the mentioned schema , keep in mind to return everything as json parsed and that technicalQNAs,etc are arrays of objects(json) and not arrays of strings.
     `;
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents:prompt,
-        config:{
-             responseMimeType: "application/json",
-            responseSchema:zodToJsonSchema(responseSchema),
-        }
-    });
-
-    // // Remove markdown code blocks and parse
-    // const text = response.text.trim();
-    //  const jsonStr = text.startsWith('```') ? text.slice(text.indexOf('\n') + 1, text.lastIndexOf('```')) : text;
-    console.log(JSON.parse(response.text));
-     return JSON.parse(response.text)
-    // return JSON.parse(jsonStr);
-
-
+    
+    const response = await generateWithFallback({ prompt, schema: responseSchema });
+    return safeJsonParse(response.text);
 }
 
 const PDF_htmlSchema = z.object({
@@ -85,26 +107,29 @@ const PDF_htmlSchema = z.object({
 })
 
 async function generatePdfFromHtml(htmlContent) {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" })
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
+    try {
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-    const pdfBuffer = await page.pdf({
-        format: "A4", margin: {
-            top: "20mm",
-            bottom: "20mm",
-            left: "15mm",
-            right: "15mm"
-        }
-    })
-
-    await browser.close()
-
-    return pdfBuffer
+        const pdfBuffer = await page.pdf({
+            format: "A4", margin: {
+                top: "20mm",
+                bottom: "20mm",
+                left: "15mm",
+                right: "15mm"
+            }
+        });
+        return pdfBuffer;
+    } finally {
+        await browser.close();
+    }
 }
 
 async function GeneratePDF ({report}){
-
 
     const prompt = `
     Given the following report, generate a well-formatted html that includes all the sections in a visually appealing way.
@@ -113,18 +138,9 @@ async function GeneratePDF ({report}){
     the format of the output should be a JSON which has a single key called html and the result html should be paired with that key.
     Report: ${JSON.stringify(report)}`
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents:prompt,
-        config:{
-             responseMimeType: "application/json",
-            responseSchema:zodToJsonSchema(PDF_htmlSchema),
-        }
-    });
-
-    const jsonContent = JSON.parse(response.text)
-
-    const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
+    const response = await generateWithFallback({ prompt, schema: PDF_htmlSchema });
+    const jsonContent = safeJsonParse(response.text);
+    const pdfBuffer = await generatePdfFromHtml(jsonContent.html);
 
     return pdfBuffer;
 }

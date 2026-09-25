@@ -62,8 +62,8 @@ const SkilGapSchema = new mongoose.Schema({
 
 const PreparationPlanSchema = new mongoose.Schema({
     day:{
-        type:Number,
-        required:true,
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
     },
     focus:{
         type:String,
@@ -80,7 +80,7 @@ const PreparationPlanSchema = new mongoose.Schema({
 const ResumeReportSchema = new mongoose.Schema({
     userDescription:{
         type:String,
-        required:true,
+       
     },
     resumeContent:{
         type:String,
@@ -104,7 +104,7 @@ const ResumeReportSchema = new mongoose.Schema({
     },
     title:{
         type:String,
-        required:true,
+        default:"Interview Strategy Plan",
     }
 },{
     timestamps:true,
