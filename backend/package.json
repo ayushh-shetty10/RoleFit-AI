@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"node server.js",
-    "dev":"npx nodemon server.js"
+    "start": "node server.js",
+    "dev": "npx nodemon server.js",
+    "worker": "node src/workers/report.worker.js",
+    "test:queue": "node src/scripts/testProducer.js"
   },
   "keywords": [],
   "author": "",
@@ -15,10 +17,12 @@
   "dependencies": {
     "@google/genai": "^1.51.0",
     "bcrypt": "^6.0.0",
+    "bullmq": "^6.3.10",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.5.0",
     "multer": "^2.1.1",

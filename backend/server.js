@@ -1,12 +1,11 @@
 require("dotenv").config();
-const app=require("./src/app.js");
-const connectdb=require("./src/db/db.js");
-const { GenerateReport } = require("./src/services/ai.service.js");
-const {selfDescription,jobDescription,resume} = require("./src/services/description.js")
+const app = require("./src/app.js");
+const connectdb = require("./src/db/db.js");
 
 connectdb();
-//GenerateReport({selfDescription,jobDescription,resume});
 
-app.listen(process.env.PORT || 3000,()=>{
-    console.log(`Server is running on port ${process.env.PORT || 3000}`);
-})
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
