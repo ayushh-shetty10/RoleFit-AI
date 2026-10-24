@@ -1,8 +1,8 @@
 require("dotenv").config();
 const app=require("./src/app.js");
 const connectdb=require("./src/db/db.js");
-const { GenerateReport } = require("./src/services/ai.service.js");
-const {selfDescription,jobDescription,resume} = require("./src/services/description.js")
+const { GenerateReport } = require("./src/services/ai/ai.service.js");
+
 require("./src/workers/report.worker");
 
 connectdb();
