@@ -10,7 +10,10 @@ const userRegister = async (req, res) => {
     const { user, token } = await authService.registerUser(req.body);
 
     res.cookie("token", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return res.status(201).json({
@@ -43,7 +46,10 @@ const userLogin = async (req, res) => {
     const { user, token } = await authService.loginUser(req.body);
 
     res.cookie("token", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return res.status(200).json({
