@@ -13,7 +13,7 @@ export const generateInterviewReport = async ({ jobDescription, selfDescription,
   if (selfDescription) formData.append("selfDescription", selfDescription);
   if (resumeFile) formData.append("resume", resumeFile);
 
-  const response = await api.post("/api/report/", formData, {
+  const response = await api.post("/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -23,22 +23,22 @@ export const generateInterviewReport = async ({ jobDescription, selfDescription,
 };
 
 export const getReportJobStatus = async (jobId) => {
-  const response = await api.get(`/api/report/jobs/${jobId}`);
+  const response = await api.get(`/jobs/${jobId}`);
   return response.data;
 };
 
 export const getOneReport = async (reportId) => {
-  const response = await api.get(`/api/report/interview/${reportId}`);
+  const response = await api.get(`/interview/${reportId}`);
   return response.data;
 };
 
 export const getAllReports = async () => {
-  const response = await api.get("/api/report/allreports");
+  const response = await api.get("/allreports");
   return response.data;
 };
 
 export const getReportPDF = async (reportId) => {
-  const response = await api.post(`/api/report/pdf/${reportId}`, null, {
+  const response = await api.post(`/pdf/${reportId}`, null, {
     responseType: "blob",
   });
   return response.data;
