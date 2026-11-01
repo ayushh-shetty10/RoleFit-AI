@@ -3,7 +3,7 @@ import axios from "axios";
 // const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const api = axios.create({
-   baseURL: "/api/auth",
+   baseURL: "https://rolefit-ai-nzqp.onrender.com/api/auth",
   withCredentials: true,
 });
 
