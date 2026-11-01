@@ -10,6 +10,11 @@ const reportQueue = new Queue(QUEUE_NAME, {
 reportQueue.on("error", (err) => {
   console.error(`[Queue:${QUEUE_NAME}] Connection Error:`, err.message);
 });
+reportQueue.on("ready", () => {
+  console.log("[Queue] Redis connection READY");
+});
+
+
 
 /**
  * Add a test job to the report-generation queue

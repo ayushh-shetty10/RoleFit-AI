@@ -52,6 +52,14 @@ reportWorker.on("active", (job) => {
   console.log(`[Worker Event] Job ${job.id} is now ACTIVE (Processing...)`);
 });
 
+
+
+reportWorker.on("ready", () => {
+  console.log("[Worker] Redis connection READY");
+});
+
+
+
 reportWorker.on("completed", (job, returnvalue) => {
   console.log(`[Worker Event] Job ${job.id} HAS COMPLETED! Output:`, JSON.stringify(returnvalue));
   console.log(`----------------------------------------\n`);
